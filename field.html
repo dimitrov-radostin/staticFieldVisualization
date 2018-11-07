@@ -6,27 +6,37 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>field</title>
 </head>
-<body>
+<body style="
+        display: flex; 
+        align-items: center; 
+        justify-content: center;
+        flex-direction: column
+    "
+>
+    <p>Click and hold to create a charge</p>
+    <p>Ctrl + click to create a negative charge</p>
     <canvas id='mainCanvas' width="500" height="500"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/victor/1.1.0/victor.js"> </script>
     <script>
-        const canv = document.getElementById('mainCanvas')
-        const ctx = canv.getContext('2d')
-        const canvasSize = canv.width
+        const MILLISECONDS_TO_GENERATE_CHARGE = 150
+
+        const canvas = document.getElementById('mainCanvas')
+        const ctx = canvas.getContext('2d')
+        const canvasSize = canvas.width
 
         ctx.fillStyle = 'black'
         ctx.fillRect(0, 0, canvasSize, canvasSize)
 
         class Source extends Victor {
-            constructor(x, y, c) {
-                super()
-                this.x = x;
-                this.y = y;
-                this.charge = c
+            constructor({ x, y, charge }) {
+                super(x, y)
+                this.charge = charge
             }
+
             potentialAt(x, y) { 
                 return this.charge * canvasSize / this.distance(new Victor(x, y))
             }
+
             draw() {
                 const  { x, y, charge } = this
                 const size = Math.abs(charge)
@@ -38,65 +48,73 @@
             }
         }
 
-        const sources = [
-            new Source(220, 350, 1),
-            new Source(1, 1, 1),
-            new Source(305, 255, -1),
-        ]
+        class Mesh {
+            constructor(context){
+                this.ctx = context
+                this.potential = Array(canvasSize).fill({}).map(o => new Array(canvasSize))
+                this.sources = []
+            }
 
-        // CALCILATE POTENTIAL
-        const potential = Array(canvasSize).fill({}).map(o => new Array(canvasSize))
-        let maxPotential = 1
-        let minPotential = -1
+            addScource({ x, y, charge }) {
+                this.sources.push( new Source({ x, y, charge }))
+            }
 
-        for (let x = 0; x < canvasSize; x++){
-            for (let y = 0; y < canvasSize; y++){
-                potential[x][y] = sources.reduce((acc, source) => { 
-                    return acc + source.potentialAt(x, y)
-                }, 0)
-
-                if (potential[x][y] === Infinity ||
-                potential[x][y] === -Infinity) continue
-
-                // maxPotential = Math.max(maxPotential, potential[x][y])
-                // minPotential = Math.min(minPotential, potential[x][y])
-
-                if (maxPotential < potential[x][y]) {
-                    maxPotential = potential[x][y]
+            forEach(callback) {
+                for (let x = 0; x < canvasSize; x++){
+                    for (let y = 0; y < canvasSize; y++){
+                        callback({ 
+                            potential: this.potential[x][y],
+                            x,
+                            y 
+                        })
+                    }
                 }
+            }
 
-                if (minPotential> potential[x][y]) {
-                    minPotential = potential[x][y]
-                }
+            calculatePotentail() {
+                this.forEach(({ potential, x, y }) => {
+                    this.potential[x][y] = 40 * this.sources.reduce((acc, source) => { 
+                        return acc + source.potentialAt(x, y)
+                    }, 0)
+                })
+            }
 
+            drawPotential() {
+                this.forEach(({ potential, x, y }) => {
+                    this.ctx.fillStyle = `rgb(0, ${potential} , 0)`
+                    this.ctx.fillRect(x, y, 1, 1)
+                })
+            }
+
+            drawSources() {
+                this.sources.forEach(source => source.draw())
             }
         }
 
-        console.log(minPotential, maxPotential);
-        console.log(potential)
+        const mesh = new Mesh (ctx)
+        let clickStart = null
 
-        //NORMALIZE POTENTIAL
-        for (let x = 0; x < canvasSize; x++){
-            for (let y = 0; y < canvasSize; y++){
-                // potential[x][y] = potential[x][y] / maxPotential * 255
-                potential[x][y] = 255 * Math.log2(1 + potential[x][y] / maxPotential)
-            }
-        }
-
-        console.log(potential);
-
-        // DRAW POTENTIAL
-        for (let x = 0; x < canvasSize; x++){
-            for (let y = 0; y < canvasSize; y++){
-                ctx.fillStyle = `rgb(0, ${potential[x][y]} , 0)`
-                ctx.fillRect(x, y, 1, 1)
-            }
-        }
+        canvas.addEventListener('mousedown', e => {
+            clickStart = Date.now()
+        })
         
-        // DRAW SOURCES
-        sources.forEach(source => source.draw())
+        canvas.addEventListener('mouseup', e => {
+            const clickDuration = Date.now() - clickStart
+            const charge = Math.ceil(Math.min(clickDuration / MILLISECONDS_TO_GENERATE_CHARGE , 9))
+ 
+            const canvasRect = canvas.getBoundingClientRect()
+            const { x, y, ctrlKey } = e
+
+            mesh.addScource({ 
+                x: x - canvasRect.x,
+                y: y - canvasRect.y,
+                charge: ctrlKey ? - charge : charge
+            })
+            mesh.calculatePotentail()
+            mesh.drawPotential()
+            mesh.drawSources()
+        })
 
     </script>
-
 </body>
 </html>
