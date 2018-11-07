@@ -25,17 +25,29 @@
                 this.charge = c
             }
             potentialAt(x, y) { 
-                return this.charge * canvasSize * Math.SQRT2 / this.distance(new Victor(x, y))
+                return this.charge * canvasSize / this.distance(new Victor(x, y))
+            }
+            draw() {
+                const  { x, y, charge } = this
+                const size = Math.abs(charge)
+
+                ctx.fillStyle = charge > 0 ? 'blue' : 'red'
+                ctx.beginPath()
+                ctx.arc(x , y, size, 0, 2 * Math.PI)
+                ctx.fill()
             }
         }
 
         const sources = [
-            new Source(0, 1, -3),
-            new Source(220, 350, -3.2),
-            new Source(20, 30, 2),
+            new Source(220, 350, 1),
+            new Source(1, 1, 1),
+            new Source(305, 255, -1),
         ]
 
+        // CALCILATE POTENTIAL
         const potential = Array(canvasSize).fill({}).map(o => new Array(canvasSize))
+        let maxPotential = 1
+        let minPotential = -1
 
         for (let x = 0; x < canvasSize; x++){
             for (let y = 0; y < canvasSize; y++){
@@ -43,17 +55,47 @@
                     return acc + source.potentialAt(x, y)
                 }, 0)
 
-                ctx.fillStyle = `rgb(0, ${potential[x][y] * 400} , 0)`
-                ctx.fillRect(x, y, 1, 1)
+                if (potential[x][y] === Infinity ||
+                potential[x][y] === -Infinity) continue
+
+                // maxPotential = Math.max(maxPotential, potential[x][y])
+                // minPotential = Math.min(minPotential, potential[x][y])
+
+                if (maxPotential < potential[x][y]) {
+                    maxPotential = potential[x][y]
+                }
+
+                if (minPotential> potential[x][y]) {
+                    minPotential = potential[x][y]
+                }
+
             }
         }
 
-        sources.forEach(source => {
-            ctx.fillStyle = source.charge > 0 ? 'blue' : 'red'
-            ctx.fillRect(source.x, source.y, 10, 10)
-        })
-
+        console.log(minPotential, maxPotential);
         console.log(potential)
+
+        //NORMALIZE POTENTIAL
+        for (let x = 0; x < canvasSize; x++){
+            for (let y = 0; y < canvasSize; y++){
+                // potential[x][y] = potential[x][y] / maxPotential * 255
+                potential[x][y] = 255 * Math.log2(1 + potential[x][y] / maxPotential)
+            }
+        }
+
+        console.log(potential);
+
+        // DRAW POTENTIAL
+        for (let x = 0; x < canvasSize; x++){
+            for (let y = 0; y < canvasSize; y++){
+                ctx.fillStyle = `rgb(0, ${potential[x][y]} , 0)`
+                ctx.fillRect(x, y, 1, 1)
+            }
+        }
+        
+        // DRAW SOURCES
+        sources.forEach(source => source.draw())
+
     </script>
 
 </body>
