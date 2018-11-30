@@ -15,81 +15,22 @@
 >
     <p>Click and hold to create a charge</p>
     <p>Ctrl + click to create a negative charge</p>
-    <canvas id='mainCanvas' width="500" height="500"/>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/victor/1.1.0/victor.js"> </script>
-    <script>
-        const MILLISECONDS_TO_GENERATE_CHARGE = 150
+    <canvas id='mainCanvas' width="50" height="50"/>
 
+    <!-- SOME LIBRARY FOR VECTORS, USED TO CALCULATE DISTANCE BETWEEN TWO POINTS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/victor/1.1.0/victor.js"> </script>
+
+    <script src="./Sources.js"></script>
+    <script src="./Mesh.js"></script>
+
+    <script defer>
+        const MILLISECONDS_TO_GENERATE_CHARGE = 150
         const canvas = document.getElementById('mainCanvas')
         const ctx = canvas.getContext('2d')
         const canvasSize = canvas.width
 
         ctx.fillStyle = 'black'
         ctx.fillRect(0, 0, canvasSize, canvasSize)
-
-        class Source extends Victor {
-            constructor({ x, y, charge }) {
-                super(x, y)
-                this.charge = charge
-            }
-
-            potentialAt(x, y) { 
-                return this.charge * canvasSize / this.distance(new Victor(x, y))
-            }
-
-            draw() {
-                const  { x, y, charge } = this
-                const size = Math.abs(charge)
-
-                ctx.fillStyle = charge > 0 ? 'blue' : 'red'
-                ctx.beginPath()
-                ctx.arc(x , y, size, 0, 2 * Math.PI)
-                ctx.fill()
-            }
-        }
-
-        class Mesh {
-            constructor(context){
-                this.ctx = context
-                this.potential = Array(canvasSize).fill({}).map(o => new Array(canvasSize))
-                this.sources = []
-            }
-
-            addScource({ x, y, charge }) {
-                this.sources.push( new Source({ x, y, charge }))
-            }
-
-            forEach(callback) {
-                for (let x = 0; x < canvasSize; x++){
-                    for (let y = 0; y < canvasSize; y++){
-                        callback({ 
-                            potential: this.potential[x][y],
-                            x,
-                            y 
-                        })
-                    }
-                }
-            }
-
-            calculatePotentail() {
-                this.forEach(({ potential, x, y }) => {
-                    this.potential[x][y] = 40 * this.sources.reduce((acc, source) => { 
-                        return acc + source.potentialAt(x, y)
-                    }, 0)
-                })
-            }
-
-            drawPotential() {
-                this.forEach(({ potential, x, y }) => {
-                    this.ctx.fillStyle = `rgb(0, ${potential} , 0)`
-                    this.ctx.fillRect(x, y, 1, 1)
-                })
-            }
-
-            drawSources() {
-                this.sources.forEach(source => source.draw())
-            }
-        }
 
         const mesh = new Mesh (ctx)
         let clickStart = null
@@ -113,8 +54,9 @@
             mesh.calculatePotentail()
             mesh.drawPotential()
             mesh.drawSources()
+            console.log(mesh.potential);
+            mesh.drawSomeFieldLines(1)
         })
-
     </script>
 </body>
 </html>
