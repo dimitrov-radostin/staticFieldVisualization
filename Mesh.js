@@ -1,3 +1,4 @@
+const canvasSize = 500
 class Mesh {
     constructor(context){
         this.ctx = context
@@ -23,7 +24,7 @@ class Mesh {
 
     calculatePotentail() {
         this.forEach(({ potential, x, y }) => {
-            this.potential[y][x] = 40 * this.sources.reduce((acc, source) => { 
+            this.potential[y][x] = this.sources.reduce((acc, source) => { 
                 return acc + source.potentialAt(x, y)
             }, 0)
         })
@@ -31,7 +32,7 @@ class Mesh {
 
     drawPotential() {
         this.forEach(({ potential, x, y }) => {
-            this.ctx.fillStyle = `rgb(0, ${potential} , 0)`
+            this.ctx.fillStyle = `rgb(0, ${potential%255} , 0)`
             this.ctx.fillRect(x, y, 1, 1)
         })
     }
@@ -41,9 +42,12 @@ class Mesh {
     }
 
     findGradient (x, y) {
-        const SEARCH_SIZE = 1
+        console.log('find gradient called with ' ,x );
 
-        
+        if (x <= 0 || y <= 0 || x >= canvasSize || y >= canvasSize) {
+            return null
+        }
+        const SEARCH_SIZE = 1
         try {
             const currentPotential = this.potential[x][y] 
             let next = [x, y]
@@ -60,8 +64,6 @@ class Mesh {
                             return difference
                         })
                 )
-            console.log(next);
-            neighbours.forEach(_ => console.log(_))
 
             let maxDifference = 0
             let step = [0, 0]
@@ -78,51 +80,21 @@ class Mesh {
             next[0] +=step[0]
             next[1] +=step[1]
 
-            if (next[0] === x && next[1] === y) return null
+            if (next[0] == x && next[1] == y) {
+                return null
+            }
+            console.log(next);
             return next
     
         } catch (e) {
             console.log(e);
             return null
         }
-        
-        // //
-        // if (x < SEARCH_SIZE ||
-        //     y < SEARCH_SIZE || 
-        //     x > canvasSize - 1 - SEARCH_SIZE ||
-        //     y > canvasSize - 1 - SEARCH_SIZE ) {
-        //         return null
-        // }
-
-        // let maxDifference = 0
-        // // console.log(next);
-        // // console.log(
-        // //     // this.potential[next[0] - 2].slice(next[1] - 2, next[1] + 3),
-        // //     this.potential[next[0] - 1].slice(next[1] - 1, next[1] + 2),
-        // //     this.potential[next[0]].slice(next[1] - 1, next[1] + 2),
-        // //     this.potential[next[0] + 1].slice(next[1] - 1, next[1] + 2),
-        // //     // this.potential[next[0] + 2].slice(next[1] - 2, next[1] + 3),
-        // // )
-        // for (let i = x - SEARCH_SIZE; i <= x + SEARCH_SIZE; i++){
-        //     for (let j = y - SEARCH_SIZE; j <= y + SEARCH_SIZE; j++){
-        //         let difference = - this.potential[next[1]][next[0]] + this.potential[j][i]
-        //         if (Math.abs((i - x) * (j - y)) === 1){
-        //             difference = difference / Math.SQRT2
-        //         }
-                
-        //         if(maxDifference < difference ) {
-        //             next = [i, j]
-        //             maxDifference = difference
-        //         }
-        //     }
-        // }
-
-        // console.log(this.potential[next[0]][next[1]], x, y ,next[0] - x, next[1] - y);
     }
 
     drawRandomFieldLine() {
-        const initalX = 2 // Math.floor(Math.random() * canvasSize)
-        const initalY = 2 // Math.floor(Math.random() * canvasSize)
+        const initalX = Math.floor(Math.random() * canvasSize)
+        const initalY = Math.floor(Math.random() * canvasSize)
         let next = [initalX, initalY]
         while (next){
             this.ctx.fillStyle = `rgb(250, 250 , 250)`

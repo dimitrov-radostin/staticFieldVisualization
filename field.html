@@ -6,16 +6,10 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>field</title>
 </head>
-<body style="
-        display: flex; 
-        align-items: center; 
-        justify-content: center;
-        flex-direction: column
-    "
->
+<body>
     <p>Click and hold to create a charge</p>
     <p>Ctrl + click to create a negative charge</p>
-    <canvas id='mainCanvas' width="50" height="50"/>
+    <canvas id='mainCanvas' width="500" height="500"/>
 
     <!-- SOME LIBRARY FOR VECTORS, USED TO CALCULATE DISTANCE BETWEEN TWO POINTS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/victor/1.1.0/victor.js"> </script>
@@ -23,40 +17,7 @@
     <script src="./Sources.js"></script>
     <script src="./Mesh.js"></script>
 
-    <script defer>
-        const MILLISECONDS_TO_GENERATE_CHARGE = 150
-        const canvas = document.getElementById('mainCanvas')
-        const ctx = canvas.getContext('2d')
-        const canvasSize = canvas.width
+    <script src="./Main.js"></script>
 
-        ctx.fillStyle = 'black'
-        ctx.fillRect(0, 0, canvasSize, canvasSize)
-
-        const mesh = new Mesh (ctx)
-        let clickStart = null
-
-        canvas.addEventListener('mousedown', e => {
-            clickStart = Date.now()
-        })
-        
-        canvas.addEventListener('mouseup', e => {
-            const clickDuration = Date.now() - clickStart
-            const charge = Math.ceil(Math.min(clickDuration / MILLISECONDS_TO_GENERATE_CHARGE , 9))
- 
-            const canvasRect = canvas.getBoundingClientRect()
-            const { x, y, ctrlKey } = e
-
-            mesh.addScource({ 
-                x: x - canvasRect.x,
-                y: y - canvasRect.y,
-                charge: ctrlKey ? - charge : charge
-            })
-            mesh.calculatePotentail()
-            mesh.drawPotential()
-            mesh.drawSources()
-            console.log(mesh.potential);
-            mesh.drawSomeFieldLines(1)
-        })
-    </script>
 </body>
 </html>

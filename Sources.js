@@ -15,7 +15,7 @@ class Source extends Victor {
 
         this.ctx.fillStyle = charge > 0 ? 'blue' : 'red'
         this.ctx.beginPath()
-        this.ctx.arc(x , y, size, 0, 2 * Math.PI)
+        this.ctx.arc(x, y, size, 0, 2 * Math.PI)
         this.ctx.fill()
     }
 }
